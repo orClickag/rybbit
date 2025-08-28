@@ -8,6 +8,7 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  CellContext,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, Monitor, Smartphone, Tablet, Mail, Phone, Send } from "lucide-react";
 import { DateTime } from "luxon";
@@ -329,7 +330,7 @@ export default function UsersPage() {
     {
       id: "actions",
       header: "Ações",
-      cell: (info) => (
+      cell: (info: CellContext<UsersResponse, unknown>) => (
         <ConversionModal 
           userId={info.row.original.user_id} 
           site={site as string}
