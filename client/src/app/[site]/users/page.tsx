@@ -32,12 +32,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { authedFetch } from "../../../api/utils";
+import { ChangeEvent } from "react";
 
 // Set up column helper
 const columnHelper = createColumnHelper<UsersResponse>();
 
 // Create a reusable sort header component
-const SortHeader = ({ column, children }: any) => {
+const SortHeader = ({ column, children }: { column: any; children: React.ReactNode }) => {
   const isSorted = column.getIsSorted();
 
   return (
@@ -100,6 +101,9 @@ const ConversionModal = ({ userId, site }: { userId: string; site: string }) => 
     }
   };
 
+  const handleEventNameChange = (e: ChangeEvent<HTMLInputElement>) => setEventName(e.target.value);
+  const handleValueChange = (e: ChangeEvent<HTMLInputElement>) => setConversionValue(e.target.value);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -120,7 +124,7 @@ const ConversionModal = ({ userId, site }: { userId: string; site: string }) => 
             <Input
               id="eventName"
               value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
+              onChange={handleEventNameChange}
               className="col-span-3"
               placeholder="conversion"
             />
@@ -133,7 +137,7 @@ const ConversionModal = ({ userId, site }: { userId: string; site: string }) => 
               id="value"
               type="number"
               value={conversionValue}
-              onChange={(e) => setConversionValue(e.target.value)}
+              onChange={handleValueChange}
               className="col-span-3"
               placeholder="0.00"
               step="0.01"
@@ -270,7 +274,7 @@ export default function UsersPage() {
       ),
     }),
     columnHelper.accessor("pageviews", {
-      header: ({ column }) => <SortHeader column={column}>Pageviews</SortHeader>,
+      header: ({ column }: { column: any }) => <SortHeader column={column}>Pageviews</SortHeader>,
       cell: (info) => <div className="whitespace-nowrap">{info.getValue().toLocaleString()}</div>,
     }),
     columnHelper.accessor("events", {
