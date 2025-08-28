@@ -9,7 +9,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Monitor, Smartphone, Tablet } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Monitor, Smartphone, Tablet, Mail, Phone, Send } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -27,6 +27,10 @@ import { OperatingSystem } from "../components/shared/icons/OperatingSystem";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import { DisabledOverlay } from "../../../components/DisabledOverlay";
 import { Avatar } from "../../../components/Avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { authedFetch } from "../../../api/utils";
 
 // Set up column helper
 const columnHelper = createColumnHelper<UsersResponse>();
@@ -52,6 +56,96 @@ const SortHeader = ({ column, children }: any) => {
         <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
+  );
+};
+
+// Componente para modal de conversão
+const ConversionModal = ({ userId, site }: { userId: string; site: string }) => {
+  const [conversionValue, setConversionValue] = useState("");
+  const [eventName, setEventName] = useState("conversion");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const sendConversionEvent = async () => {
+    if (!conversionValue || !eventName) return;
+
+    setIsLoading(true);
+    try {
+      await authedFetch(
+        "/track",
+        undefined,
+        {
+          method: "POST",
+          data: {
+            site_id: parseInt(site),
+            user_id: userId,
+            type: "custom_event",
+            event_name: eventName,
+            props: {
+              value: parseFloat(conversionValue),
+              currency: "BRL"
+            }
+          },
+        }
+      );
+
+      alert("Evento de conversão enviado com sucesso!");
+      setConversionValue("");
+      setEventName("conversion");
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao enviar evento: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Send className="w-4 h-4 mr-1" />
+          Conversão
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Enviar Evento de Conversão</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="eventName" className="text-right">
+              Nome do Evento
+            </Label>
+            <Input
+              id="eventName"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              className="col-span-3"
+              placeholder="conversion"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="value" className="text-right">
+              Valor (R$)
+            </Label>
+            <Input
+              id="value"
+              type="number"
+              value={conversionValue}
+              onChange={(e) => setConversionValue(e.target.value)}
+              className="col-span-3"
+              placeholder="0.00"
+              step="0.01"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button onClick={sendConversionEvent} disabled={isLoading || !conversionValue || !eventName}>
+              {isLoading ? "Enviando..." : "Enviar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -156,6 +250,24 @@ export default function UsersPage() {
         );
       },
     }),
+    columnHelper.accessor("email", {
+      header: "Email",
+      cell: (info) => (
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Mail className="w-4 h-4 text-neutral-400" />
+          {info.getValue() || "-"}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("phone", {
+      header: "Telefone",
+      cell: (info) => (
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Phone className="w-4 h-4 text-neutral-400" />
+          {info.getValue() || "-"}
+        </div>
+      ),
+    }),
     columnHelper.accessor("pageviews", {
       header: ({ column }) => <SortHeader column={column}>Pageviews</SortHeader>,
       cell: (info) => <div className="whitespace-nowrap">{info.getValue().toLocaleString()}</div>,
@@ -214,6 +326,16 @@ export default function UsersPage() {
         );
       },
     }),
+    {
+      id: "actions",
+      header: "Ações",
+      cell: (info) => (
+        <ConversionModal 
+          userId={info.row.original.user_id} 
+          site={site as string}
+        />
+      ),
+    },
   ];
 
   // Set up table instance

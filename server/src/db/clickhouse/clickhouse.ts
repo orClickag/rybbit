@@ -54,7 +54,9 @@ export const initializeClickhouse = async () => {
         ADD COLUMN IF NOT EXISTS cls Nullable(Float64),
         ADD COLUMN IF NOT EXISTS inp Nullable(Float64),
         ADD COLUMN IF NOT EXISTS fcp Nullable(Float64),
-        ADD COLUMN IF NOT EXISTS ttfb Nullable(Float64)
+        ADD COLUMN IF NOT EXISTS ttfb Nullable(Float64),
+        ADD COLUMN IF NOT EXISTS email String DEFAULT '',
+        ADD COLUMN IF NOT EXISTS phone String DEFAULT ''
     `,
   });
 
